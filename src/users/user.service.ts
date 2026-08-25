@@ -1,5 +1,5 @@
-import { CreateUserDto } from './create.userdto';
-import { UpdateUserDto } from './update.userdto';
+import { CreateUserDto } from './dto/req/create.user.dto';
+import { UpdateUserDto } from './dto/req/update.user.dto';
 import {
   ConflictException,
   Injectable,

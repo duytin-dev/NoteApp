@@ -1,5 +1,5 @@
-import { CreateNoteDto } from './dto/req/create.notedto';
-import { UpdateNoteDto } from './dto/req/update.notedto';
+import { CreateNoteDto } from './dto/req/create.note.dto';
+import { UpdateNoteDto } from './dto/req/update.note.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Note } from './note.entity';

@@ -1,27 +1,27 @@
 import { NoteModule } from './notes/note.module';
 import { UserModule } from './users/user.module';
+
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { databaseConfig } from './config/database.config';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '123456',
-      database: 'noteapp',
-      autoLoadEntities: true,
-      synchronize: true,
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
-  UserModule,
- NoteModule,
+
+    TypeOrmModule.forRoot(databaseConfig()),
+
+    UserModule,
+    NoteModule,
   ],
   controllers: [AppController],
   providers: [AppService],
- 
 })
 export class AppModule {}
