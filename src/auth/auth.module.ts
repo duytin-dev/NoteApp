@@ -9,21 +9,20 @@ import { JwtAuthGuard } from './strategies/jwt.auth.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
-  imports: [ UserModule,
-
+  imports: [
+    UserModule,
 
     JwtModule.registerAsync({
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-            secret: configService.getOrThrow<string>('JWT_SECRET'),
-            signOptions: {
-                expiresIn: configService.getOrThrow<StringValue>('JWT_EXPIRES_IN'),
-            },
-        }),
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.getOrThrow<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: configService.getOrThrow<StringValue>('JWT_EXPIRES_IN'),
+        },
+      }),
     }),
-
   ],
   controllers: [AuthController],
-  providers: [AuthService,JwtStrategy],
+  providers: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

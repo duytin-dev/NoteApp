@@ -7,7 +7,6 @@ import {
 } from 'class-validator';
 
 export class UpdateUserDto {
-
   @IsOptional()
   @IsString()
   @IsNotEmpty()

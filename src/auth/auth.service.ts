@@ -15,7 +15,8 @@ import { JwtService } from '@nestjs/jwt';
 export class AuthService {
   constructor(
     private readonly userService: UserService,
-    private readonly jwtService: JwtService,) {}
+    private readonly jwtService: JwtService,
+  ) {}
 
   async register(
     registerRequest: RegisterRequest,
@@ -46,20 +47,22 @@ export class AuthService {
     if (!user) {
       throw new BadRequestException('Account do not register !');
     }
+    const checkPass = bcrypt.compareSync(loginRequest.password, user.password);
+    if (!checkPass)
+      throw new BadRequestException('Password does not correct !');
     const payload = {
       sub: user.id,
       email: user.email,
-    }
-    const accessToken =  await this.jwtService.signAsync(payload);
-    
+    };
+    const accessToken = await this.jwtService.signAsync(payload);
+
     const loginDtoResponse: LoginDtoResponse = {
       id: user.id,
       name: user.name,
       email: user.email,
       accessToken: accessToken,
+    };
 
-    }
-   
     return loginDtoResponse;
   }
 }

@@ -1,6 +1,10 @@
 import { CreateNoteDto } from './dto/req/create.note.dto';
 import { UpdateNoteDto } from './dto/req/update.note.dto';
-import { BadGatewayException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Note } from './note.entity';
 import { Not, Repository } from 'typeorm';
@@ -21,7 +25,10 @@ export class NoteService {
   async create(createNoteDto: CreateNoteDto) {
     const { title, content, userId } = createNoteDto;
     const user = await this.findUser(userId);
-    if(!user) throw new BadGatewayException(`User by id ${userId} not does not exist !`);
+    if (!user)
+      throw new BadGatewayException(
+        `User by id ${userId} not does not exist !`,
+      );
 
     const note = this.noteRepository.create({
       title,
@@ -30,18 +37,17 @@ export class NoteService {
     });
 
     const savedNote = await this.noteRepository.save(note);
-    const noteResponse : NoteResponse = {
-       id: savedNote.id,
-       title: savedNote.title,
-       content: savedNote.content,
-       userId:savedNote.user.id,
-       created_At : savedNote.created_At,
-       updated_At: savedNote.updated_At,
-       isCompleted: savedNote.isCompleted,
-
-    }
+    const noteResponse: NoteResponse = {
+      id: savedNote.id,
+      title: savedNote.title,
+      content: savedNote.content,
+      userId: savedNote.user.id,
+      created_At: savedNote.created_At,
+      updated_At: savedNote.updated_At,
+      isCompleted: savedNote.isCompleted,
+    };
     return noteResponse;
-  } 
+  }
 
   async findAll(): Promise<NoteResponse[]> {
     const notes = await this.noteRepository.find({
@@ -68,16 +74,15 @@ export class NoteService {
       throw new NotFoundException('Note not found');
     }
 
-    const noteResponse : NoteResponse = {
-       id: note.id,
-       title: note.title,
-       content: note.content,
-       userId:note.user.id,
-       created_At : note.created_At,
-       updated_At: note.updated_At,
-       isCompleted:note.isCompleted,
-
-    }
+    const noteResponse: NoteResponse = {
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      userId: note.user.id,
+      created_At: note.created_At,
+      updated_At: note.updated_At,
+      isCompleted: note.isCompleted,
+    };
     return noteResponse;
   }
 
@@ -104,17 +109,16 @@ export class NoteService {
     }
 
     const saved = await this.noteRepository.save(note);
-    
-     const noteResponse : NoteResponse = {
-       id: saved.id,
-       title: saved.title,
-       content: saved.content,
-       userId:saved.user.id,
-       created_At : saved.created_At,
-       updated_At: saved.updated_At,
-       isCompleted: saved.isCompleted,
 
-    }
+    const noteResponse: NoteResponse = {
+      id: saved.id,
+      title: saved.title,
+      content: saved.content,
+      userId: saved.user.id,
+      created_At: saved.created_At,
+      updated_At: saved.updated_At,
+      isCompleted: saved.isCompleted,
+    };
     return noteResponse;
   }
 
@@ -141,32 +145,32 @@ export class NoteService {
     return user;
   }
 
- async completeNote(id: number) {
-  const note = await this.noteRepository.findOne({
-    where: { id },
-    relations: {
-      user: true,
-    },
-  });
+  async completeNote(id: number) {
+    const note = await this.noteRepository.findOne({
+      where: { id },
+      relations: {
+        user: true,
+      },
+    });
 
-  if (!note) {
-    throw new NotFoundException('Note not found');
+    if (!note) {
+      throw new NotFoundException('Note not found');
+    }
+
+    note.isCompleted = true;
+
+    const savedNote = await this.noteRepository.save(note);
+
+    const noteResponse: NoteResponse = {
+      id: savedNote.id,
+      title: savedNote.title,
+      content: savedNote.content,
+      userId: savedNote.user.id,
+      created_At: savedNote.created_At,
+      updated_At: savedNote.updated_At,
+      isCompleted: savedNote.isCompleted,
+    };
+
+    return noteResponse;
   }
-
-  note.isCompleted = true;
-
- const savedNote =  await this.noteRepository.save(note);
-
-  const noteResponse: NoteResponse = {
-    id: savedNote .id,
-    title: savedNote .title,
-    content: savedNote .content,
-    userId: savedNote .user.id,
-    created_At: savedNote .created_At,
-    updated_At: savedNote .updated_At,
-    isCompleted: savedNote .isCompleted,
-  };
-
-  return noteResponse;
-}
 }
