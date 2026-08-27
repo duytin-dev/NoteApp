@@ -1,14 +1,14 @@
+import { ApiResponse } from './../utils/api.res';
 import {
   Body,
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   ParseIntPipe,
   Patch,
-  Post,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/req/create.user.dto';
 import { UpdateUserDto } from './dto/req/update.user.dto';
 import { UserService } from './user.service';
 
@@ -16,27 +16,30 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
-  }
-
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  @HttpCode(200)
+  async findAll() {
+    const listUser = await this.userService.findAll();
+    return new ApiResponse('Fetch list user successfully', 'success', listUser);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.findOne(id);
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const userResponse = await this.userService.findOne(id);
+    return new ApiResponse(
+      'Fetch user by id successfully',
+      'success',
+      userResponse,
+    );
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.userService.update(id, updateUserDto);
+    const user = await this.userService.update(id, updateUserDto);
+    return new ApiResponse('Update user successfully', 'success', user);
   }
 
   @Delete(':id')

@@ -1,10 +1,12 @@
 import { CreateNoteDto } from './dto/req/create.note.dto';
 import { UpdateNoteDto } from './dto/req/update.note.dto';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Note } from './note.entity';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { User } from '../users/user.entity';
+import { ApiResponse } from '../utils/api.res';
+import { NoteResponse } from './dto/res/note.res';
 
 @Injectable()
 export class NoteService {
@@ -19,6 +21,7 @@ export class NoteService {
   async create(createNoteDto: CreateNoteDto) {
     const { title, content, userId } = createNoteDto;
     const user = await this.findUser(userId);
+    if(!user) throw new BadGatewayException(`User by id ${userId} not does not exist !`);
 
     const note = this.noteRepository.create({
       title,
@@ -26,15 +29,33 @@ export class NoteService {
       user,
     });
 
-    const saved = await this.noteRepository.save(note);
-    return this.toSafeNote(saved);
-  }
+    const savedNote = await this.noteRepository.save(note);
+    const noteResponse : NoteResponse = {
+       id: savedNote.id,
+       title: savedNote.title,
+       content: savedNote.content,
+       userId:savedNote.user.id,
+       created_At : savedNote.created_At,
+       updated_At: savedNote.updated_At,
+       isCompleted: savedNote.isCompleted,
 
-  async findAll() {
+    }
+    return noteResponse;
+  } 
+
+  async findAll(): Promise<NoteResponse[]> {
     const notes = await this.noteRepository.find({
       relations: { user: true },
     });
-    return notes.map((note) => this.toSafeNote(note));
+    return notes.map((note) => ({
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      userId: note.user.id,
+      created_At: note.created_At,
+      updated_At: note.updated_At,
+      isCompleted: note.isCompleted,
+    }));
   }
 
   async findOne(id: number) {
@@ -47,7 +68,17 @@ export class NoteService {
       throw new NotFoundException('Note not found');
     }
 
-    return this.toSafeNote(note);
+    const noteResponse : NoteResponse = {
+       id: note.id,
+       title: note.title,
+       content: note.content,
+       userId:note.user.id,
+       created_At : note.created_At,
+       updated_At: note.updated_At,
+       isCompleted:note.isCompleted,
+
+    }
+    return noteResponse;
   }
 
   async update(id: number, updateNoteDto: UpdateNoteDto) {
@@ -73,7 +104,18 @@ export class NoteService {
     }
 
     const saved = await this.noteRepository.save(note);
-    return this.toSafeNote(saved);
+    
+     const noteResponse : NoteResponse = {
+       id: saved.id,
+       title: saved.title,
+       content: saved.content,
+       userId:saved.user.id,
+       created_At : saved.created_At,
+       updated_At: saved.updated_At,
+       isCompleted: saved.isCompleted,
+
+    }
+    return noteResponse;
   }
 
   async remove(id: number) {
@@ -99,20 +141,32 @@ export class NoteService {
     return user;
   }
 
-  private toSafeNote(note: Note) {
-    return {
-      id: note.id,
-      title: note.title,
-      content: note.content,
-      created_At: note.created_At,
-      updated_At: note.updated_At,
-      user: note.user
-        ? {
-            id: note.user.id,
-            name: note.user.name,
-            email: note.user.email,
-          }
-        : undefined,
-    };
+ async completeNote(id: number) {
+  const note = await this.noteRepository.findOne({
+    where: { id },
+    relations: {
+      user: true,
+    },
+  });
+
+  if (!note) {
+    throw new NotFoundException('Note not found');
   }
+
+  note.isCompleted = true;
+
+ const savedNote =  await this.noteRepository.save(note);
+
+  const noteResponse: NoteResponse = {
+    id: savedNote .id,
+    title: savedNote .title,
+    content: savedNote .content,
+    userId: savedNote .user.id,
+    created_At: savedNote .created_At,
+    updated_At: savedNote .updated_At,
+    isCompleted: savedNote .isCompleted,
+  };
+
+  return noteResponse;
+}
 }

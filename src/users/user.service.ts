@@ -1,4 +1,3 @@
-import { CreateUserDto } from './dto/req/create.user.dto';
 import { UpdateUserDto } from './dto/req/update.user.dto';
 import {
   ConflictException,
@@ -8,6 +7,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
+import { UserResponse } from './dto/res/user.res';
 
 @Injectable()
 export class UserService {
@@ -16,22 +17,19 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
-    const { name, password, email } = createUserDto;
-    const existUser = await this.userRepository.findOne({ where: { email } });
-
-    if (existUser) {
-      throw new ConflictException('User have already exist !');
-    }
-
-    const user = this.userRepository.create({ name, password, email });
-    const saved = await this.userRepository.save(user);
-    return this.toSafeUser(saved);
+  async create(userData: { name: string; email: string; password: string }) {
+    const user = this.userRepository.create(userData);
+    return this.userRepository.save(user);
   }
 
-  async findAll() {
+  async findAll(): Promise<UserResponse[]> {
     const users = await this.userRepository.find();
-    return users.map((user) => this.toSafeUser(user));
+
+    return users.map((user) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    }));
   }
 
   async findOne(id: number) {
@@ -44,7 +42,13 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    return this.toSafeUser(user);
+    const userWrap: UserResponse = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    };
+
+    return userWrap;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
@@ -64,9 +68,18 @@ export class UserService {
       }
     }
 
+    if (updateUserDto.password) {
+      updateUserDto.password = bcrypt.hashSync(updateUserDto.password, 10);
+    }
+
     Object.assign(user, updateUserDto);
-    const saved = await this.userRepository.save(user);
-    return this.toSafeUser(saved);
+    const userSaved = await this.userRepository.save(user);
+    const userResponse: UserResponse = {
+      id: userSaved.id,
+      name: userSaved.name,
+      email: userSaved.email,
+    };
+    return userResponse;
   }
 
   async remove(id: number) {
@@ -80,12 +93,7 @@ export class UserService {
     return { message: 'User deleted successfully' };
   }
 
-  private toSafeUser(user: User) {
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      notes: user.notes,
-    };
+  async findByEmail(email: string) {
+    return this.userRepository.findOne({ where: { email } });
   }
 }
