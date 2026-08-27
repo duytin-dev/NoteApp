@@ -22,18 +22,14 @@ export class UserController {
   @Get()
   @HttpCode(200)
   async findAll() {
-    const listUser = await this.userService.findAll();
-    return new ApiResponse('Fetch list user successfully', 'success', listUser);
+    return  this.userService.findAll();
+    
   }
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    const userResponse = await this.userService.findOne(id);
-    return new ApiResponse(
-      'Fetch user by id successfully',
-      'success',
-      userResponse,
-    );
+    return  this.userService.findOne(id);
+   
   }
 
   @Patch(':id')
@@ -41,8 +37,8 @@ export class UserController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    const user = await this.userService.update(id, updateUserDto);
-    return new ApiResponse('Update user successfully', 'success', user);
+    return  this.userService.update(id, updateUserDto);
+   
   }
 
   @Delete(':id')

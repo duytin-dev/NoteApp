@@ -22,25 +22,21 @@ export class NoteController {
 
   @Post()
   async create(@Body() createNoteDto: CreateNoteDto) {
-    const note = await this.noteService.create(createNoteDto);
-    return new ApiResponse('Create note successfully !', 'suceess', note);
+    return this.noteService.create(createNoteDto);
+   
   }
 
   @Get()
   @HttpCode(200)
   async findAll() {
-    const listNotes = await this.noteService.findAll();
-    return new ApiResponse(
-      'Fetch all notes successfully !',
-      'success',
-      listNotes,
-    );
+    return this.noteService.findAll();
+  
   }
 
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    const note = await this.noteService.findOne(id);
-    return new ApiResponse('Fetch note by id successfully', 'success', note);
+    return this.noteService.findOne(id);
+    
   }
 
   @Patch(':id')
@@ -48,17 +44,12 @@ export class NoteController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateNoteDto: UpdateNoteDto,
   ) {
-    const note = await this.noteService.update(id, updateNoteDto);
-    return new ApiResponse('Update note successfully !', 'sucess', note);
+    return this.noteService.update(id, updateNoteDto);
+   
   }
   @Patch(':id/complete')
   async checkComplete(@Param('id', ParseIntPipe) id: number) {
-    const checkNote = await this.noteService.completeNote(id);
-    return new ApiResponse(
-      'Note have already completed!',
-      'success',
-      checkNote,
-    );
+   return  this.noteService.completeNote(id);
   }
 
   @Delete(':id')

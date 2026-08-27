@@ -10,14 +10,13 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerRequest: RegisterRequest) {
-    const user = await this.authService.register(registerRequest);
-    return new ApiResponse('Register successfully', 'success', user);
+   return this.authService.register(registerRequest);
+   
   }
-
   @Post('login')
   @HttpCode(200)
   async login(@Body() loginRequest: LoginRequest) {
-    const user = await this.authService.login(loginRequest);
-    return new ApiResponse('Login successfully', 'success', user);
-  }
+   return this.authService.login(loginRequest);
+}
+
 }

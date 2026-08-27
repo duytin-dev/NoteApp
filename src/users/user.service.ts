@@ -23,13 +23,9 @@ export class UserService {
   }
 
   async findAll(): Promise<UserResponse[]> {
-    const users = await this.userRepository.find();
-
-    return users.map((user) => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    }));
+    
+  const users = await this.userRepository.find();
+  return users.map((user) => this.toUserResponse(user));
   }
 
   async findOne(id: number) {
@@ -41,14 +37,8 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    return this.toUserResponse(user);
 
-    const userWrap: UserResponse = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    };
-
-    return userWrap;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
@@ -74,12 +64,8 @@ export class UserService {
 
     Object.assign(user, updateUserDto);
     const userSaved = await this.userRepository.save(user);
-    const userResponse: UserResponse = {
-      id: userSaved.id,
-      name: userSaved.name,
-      email: userSaved.email,
-    };
-    return userResponse;
+
+    return this.toUserResponse(userSaved);
   }
 
   async remove(id: number) {
@@ -95,5 +81,12 @@ export class UserService {
 
   async findByEmail(email: string) {
     return this.userRepository.findOne({ where: { email } });
+  }
+  private toUserResponse(user: User): UserResponse {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    }
   }
 }

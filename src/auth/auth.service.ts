@@ -27,7 +27,7 @@ export class AuthService {
       throw new ConflictException('User have already exist !');
     }
 
-    const passwordHash = bcrypt.hashSync(registerRequest.password, 10);
+    const passwordHash = await bcrypt.hash(registerRequest.password, 10);
     const user = await this.userService.create({
       name: registerRequest.name,
       email: registerRequest.email,
@@ -48,6 +48,7 @@ export class AuthService {
       throw new BadRequestException('Account do not register !');
     }
     const checkPass = bcrypt.compareSync(loginRequest.password, user.password);
+
     if (!checkPass)
       throw new BadRequestException('Password does not correct !');
     const payload = {
