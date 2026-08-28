@@ -6,16 +6,17 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { UserResponse } from './dto/res/user.res';
+import { UserPaginate } from './dto/res/user.page.res';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async create(userData: { name: string; email: string; password: string }) {
     const user = this.userRepository.create(userData);
@@ -23,10 +24,33 @@ export class UserService {
   }
 
   async findAll(): Promise<UserResponse[]> {
-    
-  const users = await this.userRepository.find();
-  return users.map((user) => this.toUserResponse(user));
+
+    const users = await this.userRepository.find();
+    return users.map((user) => this.toUserResponse(user));
   }
+  async paginate(query): Promise<UserPaginate> {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const keyword = query.keyword || '';
+
+    const [result, total] = await this.userRepository.findAndCount({
+      where: {
+        name: Like(`%${keyword}%`),
+      },
+      order: {
+        name: 'DESC',
+      },
+      take: limit,
+      skip: skip,
+    });
+
+    return {
+      data: result.map((user) => this.toUserResponse(user)),
+      count: total,
+    };
+  }
+
 
   async findOne(id: number) {
     const user = await this.userRepository.findOne({

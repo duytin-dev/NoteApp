@@ -7,10 +7,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Note } from './note.entity';
-import { Not, Repository } from 'typeorm';
+import { Like, Not, Repository } from 'typeorm';
 import { User } from '../users/user.entity';
 import { ApiResponse } from '../utils/api.res';
 import { NoteResponse } from './dto/res/note.res';
+import { NotePaginate } from './dto/res/note.page.res';
 
 @Injectable()
 export class NoteService {
@@ -20,7 +21,7 @@ export class NoteService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async create(createNoteDto: CreateNoteDto) {
     const { title, content, userId } = createNoteDto;
@@ -41,11 +42,36 @@ export class NoteService {
     return this.toNoteResponse(savedNote);
   }
 
-  async findAll(): Promise<NoteResponse[]> {
+  async findAll(userId: number): Promise<NoteResponse[]> {
     const notes = await this.noteRepository.find({
+      where: { user: { id: userId, } },
       relations: { user: true },
     });
     return notes.map((note) => this.toNoteResponse(note));
+  }
+  async paginate(query): Promise<NotePaginate> {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const keyword = query.keyword || ' ';
+
+    const [result, total] = await this.noteRepository.findAndCount({
+      where: {
+        title: Like(`%${keyword}%`),
+      },
+      order: {
+        title: 'DESC',
+      },
+      relations: { user: true },
+      take: limit,
+      skip: skip,
+
+    });
+    return {
+      data: result.map((note) => this.toNoteResponse(note)),
+      count: total
+
+    };
   }
 
   async findOne(id: number) {
