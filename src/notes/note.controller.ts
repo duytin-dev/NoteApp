@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -17,7 +18,8 @@ import { NoteService } from './note.service';
 import { CreateNoteDto } from './dto/req/create.note.dto';
 import { UpdateNoteDto } from './dto/req/update.note.dto';
 import { ApiResponse } from '../utils/api.res';
-import { JwtAuthGuard } from '../auth/strategies/jwt.auth.guard';
+import { JwtAuthGuard } from '../guards/jwt.auth.guard';
+import { NoteQueryDto } from './dto/req/note.query.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('notes')
 export class NoteController {
@@ -27,15 +29,12 @@ export class NoteController {
 
   @Get()
   @HttpCode(200)
-  async findAll(@Request() req) {
-    // console.log(req.user.userId);
-    return this.noteService.findAll(req.user.userId);
+  async findAll(@Request() req, @Query() query: NoteQueryDto) {
+    //console.log(req.user.userId);
+    return this.noteService.findAll(req.user.userId, query);
 
   }
-  @Get('/paginate')
-  async paginate(@Query() query) {
-    return this.noteService.paginate(query);
-  }
+
   @Post()
   async create(@Body() createNoteDto: CreateNoteDto) {
     return this.noteService.create(createNoteDto);
@@ -49,19 +48,19 @@ export class NoteController {
 
   @Patch(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) id: number, @Request() req,
     @Body() updateNoteDto: UpdateNoteDto,
   ) {
-    return this.noteService.update(id, updateNoteDto);
+    return this.noteService.update(id, req.user.userId, updateNoteDto);
 
   }
   @Patch(':id/complete')
-  async checkComplete(@Param('id', ParseIntPipe) id: number) {
-    return this.noteService.completeNote(id);
+  async checkComplete(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    return this.noteService.completeNote(id, req.user.userId);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.noteService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
+    return this.noteService.remove(id, req.user.userId);
   }
 }

@@ -12,6 +12,7 @@ import { User } from '../users/user.entity';
 import { ApiResponse } from '../utils/api.res';
 import { NoteResponse } from './dto/res/note.res';
 import { NotePaginate } from './dto/res/note.page.res';
+import { NoteQueryDto } from './dto/req/note.query.dto';
 
 @Injectable()
 export class NoteService {
@@ -42,37 +43,42 @@ export class NoteService {
     return this.toNoteResponse(savedNote);
   }
 
-  async findAll(userId: number): Promise<NoteResponse[]> {
-    const notes = await this.noteRepository.find({
-      where: { user: { id: userId, } },
-      relations: { user: true },
-    });
-    return notes.map((note) => this.toNoteResponse(note));
-  }
-  async paginate(query): Promise<NotePaginate> {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 10;
-    const skip = (page - 1) * limit;
-    const keyword = query.keyword || ' ';
+  async findAll(
+    userId: number,
+    query: NoteQueryDto,
+  ): Promise<NotePaginate> {
+    const { page, limit, keyword } = query;
 
-    const [result, total] = await this.noteRepository.findAndCount({
+    const skip = (page - 1) * limit;
+
+    const [notes, total] = await this.noteRepository.findAndCount({
       where: {
-        title: Like(`%${keyword}%`),
+        user: { id: userId },
+        ...(keyword
+          ? {
+            title: Like(`%${keyword}%`),
+          }
+          : {}),
       },
       order: {
         title: 'DESC',
       },
-      relations: { user: true },
+      relations: {
+        user: true,
+      },
       take: limit,
-      skip: skip,
-
+      skip,
     });
-    return {
-      data: result.map((note) => this.toNoteResponse(note)),
-      count: total
 
+    return {
+      data: notes.map((note) => this.toNoteResponse(note)),
+      count: total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
+
 
   async findOne(id: number) {
     const note = await this.noteRepository.findOne({
@@ -87,20 +93,15 @@ export class NoteService {
     return this.toNoteResponse(note);
   }
 
-  async update(id: number, updateNoteDto: UpdateNoteDto) {
+  async update(id: number, userId: number, updateNoteDto: UpdateNoteDto) {
     const note = await this.noteRepository.findOne({
-      where: { id },
+      where: { id, user: { id: userId } },
       relations: { user: true },
     });
 
     if (!note) {
       throw new NotFoundException('Note not found');
     }
-
-    if (updateNoteDto.userId) {
-      note.user = await this.findUser(updateNoteDto.userId);
-    }
-
     if (updateNoteDto.title !== undefined) {
       note.title = updateNoteDto.title;
     }
@@ -114,8 +115,8 @@ export class NoteService {
     return this.toNoteResponse(saved);
   }
 
-  async remove(id: number) {
-    const note = await this.noteRepository.findOne({ where: { id } });
+  async remove(id: number, userId: number) {
+    const note = await this.noteRepository.findOne({ where: { id, user: { id: userId } } });
 
     if (!note) {
       throw new NotFoundException('Note not found');
@@ -137,9 +138,10 @@ export class NoteService {
     return user;
   }
 
-  async completeNote(id: number) {
+  async completeNote(id: number, userId: number) {
+    let check: boolean = false;
     const note = await this.noteRepository.findOne({
-      where: { id },
+      where: { id, user: { id: userId } },
       relations: {
         user: true,
       },
@@ -148,7 +150,14 @@ export class NoteService {
     if (!note) {
       throw new NotFoundException('Note not found');
     }
-    note.isCompleted = true;
+    if (note.isCompleted === false) {
+      note.isCompleted = true;
+      check = true;
+    } else {
+      note.isCompleted = false;
+      check = false;
+    }
+
     const savedNote = await this.noteRepository.save(note);
     return this.toNoteResponse(savedNote);
   }

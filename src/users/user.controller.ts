@@ -13,7 +13,11 @@ import {
 } from '@nestjs/common';
 import { UpdateUserDto } from './dto/req/update.user.dto';
 import { UserService } from './user.service';
-import { JwtAuthGuard } from '../auth/strategies/jwt.auth.guard';
+import { JwtAuthGuard } from '../guards/jwt.auth.guard';
+import { UserQueryDto } from './dto/req/user.query.dto';
+import { Roles } from '../decorator/roles.decorator';
+import { RolesGuard } from '../guards/roles.guard';
+import { Role } from '../enum/role.enum';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -22,14 +26,12 @@ export class UserController {
 
   @Get()
   @HttpCode(200)
-  async findAll(@Request() req) {
-    return this.userService.findAll();
+  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  async findAll(@Query() query: UserQueryDto) {
+    return this.userService.findAll(query);
   }
-  @Get('/paginate')
-  @HttpCode(200)
-  async paginate(@Query() query) {
-    return this.userService.paginate(query);
-  }
+
 
   @Get(':id')
   @HttpCode(200)
@@ -47,6 +49,8 @@ export class UserController {
 
   }
   @Delete(':id')
+  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.userService.remove(id);
   }

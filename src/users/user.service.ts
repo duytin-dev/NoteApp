@@ -10,6 +10,7 @@ import { Like, Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { UserResponse } from './dto/res/user.res';
 import { UserPaginate } from './dto/res/user.page.res';
+import { UserQueryDto } from './dto/req/user.query.dto';
 
 @Injectable()
 export class UserService {
@@ -23,34 +24,28 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async findAll(): Promise<UserResponse[]> {
-
-    const users = await this.userRepository.find();
-    return users.map((user) => this.toUserResponse(user));
-  }
-  async paginate(query): Promise<UserPaginate> {
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 10;
+  async findAll(query: UserQueryDto): Promise<UserPaginate> {
+    const { page, limit, keyword } = query;
     const skip = (page - 1) * limit;
-    const keyword = query.keyword || '';
+    const [users, total] = await this.userRepository.findAndCount({
 
-    const [result, total] = await this.userRepository.findAndCount({
-      where: {
-        name: Like(`%${keyword}%`),
-      },
+      where: keyword ? { name: Like(`%${keyword}%`) } : {},
+
       order: {
-        name: 'DESC',
+        name: 'DESC', // Sort
       },
       take: limit,
       skip: skip,
     });
 
     return {
-      data: result.map((user) => this.toUserResponse(user)),
+      data: users.map((user) => this.toUserResponse(user)),
       count: total,
-    };
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    }
   }
-
 
   async findOne(id: number) {
     const user = await this.userRepository.findOne({

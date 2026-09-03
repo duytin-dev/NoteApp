@@ -11,7 +11,4 @@ export class UpdateNoteDto {
   @IsNotEmpty()
   content?: string;
 
-  @IsOptional()
-  @IsInt()
-  userId?: number;
 }
